@@ -44,13 +44,13 @@ pull_requests = open_pull_requests.filter do | pull_request |
 end
 
 def truth_of(value, default)
-    (value || default).casecmp('true').zero?
+    (value || default).casecmp(default.to_s).zero?
 end
 
-should_update = truth_of(ENV['AUTO_UPDATE'], 'true')
-close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], 'false')
-delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], 'false')
-merge_behind = truth_of(ENV[`MERGE_WHEN_BEHIND`], 'true')
+should_update = truth_of(ENV['AUTO_UPDATE'], true)
+close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], false)
+delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false)
+merge_behind = truth_of(ENV[`MERGE_WHEN_BEHIND`], true)
 merge_method = ENV['MERGE_METHOD'] || 'merge'
 pull_requests.each do | pull_request |
     case pull_request.mergeable_state
