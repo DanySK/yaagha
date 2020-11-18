@@ -17,7 +17,9 @@ end
 
 # Common configuration
 puts 'Checking input parameters'
-github_token = ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
+def github_token()
+    ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
+end
 github_api_endpoint = ENV['GITHUB_API_URL'] || 'https://api.github.com'
 puts "Configuring API access, selected endpoint is #{github_api_endpoint}"
 Octokit.configure do | conf |
@@ -70,8 +72,12 @@ def update_rebase(client, pull_request)
             `git rebase --abort`
             false
         else
+            remote_uri = "https://#{ENV['GITHUB_ACTOR']}:#{github_token}@#{repo.html_url.split('://').last}"
+            authenticated_remote_name = 'authenticated'
+            git.add_remote(authenticated_remote_name, remote_uri)
             puts `git push --force`
-            $?.success?
+            # $?.success?
+            true
         end
     end
     FileUtils.rm_rf(destination)
@@ -128,20 +134,15 @@ pull_requests.each do | pull_request |
     state = pull_request.mergeable_state
     puts "Pull request ##{pull_request.number} is in state '#{state}'"
     case pull_request.mergeable_state
-    when 'behind'
+    when /behind|unknown/
         behind(client, pull_request)
     when 'clean'
         perform_merge(client, pull_request)
     when 'dirty'
         dirty(client, pull_request)
-    # when 'unknown'
-    #     puts 'Trying to syncronize'
-    #     behind(client, pull_request)
-    #     puts "Reloading the pull request"
-    #     pull_request = client.pull_request(repo_slug, pull_request.number)
-    #     if pull_request.state == 'open' then
-    #         unless 
-
+    when 'unknown'
+        puts 'Trying to syncronize'
+        behind(client, pull_request)
     else
         puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
     end
