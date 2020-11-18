@@ -42,10 +42,15 @@ pull_requests = open_pull_requests.filter do | pull_request |
         # Either it's ok to merge forks or head and base repo should be equal
         (should_merge_forks || pull_request.base.repo.full_name == pull_request.head.repo.full_name)
 end
-should_update = (ENV['AUTO_UPDATE'] || 'true').casecmp('true').zero?
-close_on_conflict = (ENV['CLOSE_ON_CONFLICT'] || 'false').zero?
-delete_branch_on_close = (ENV['DELETE_BRANCH_ON_CLOSE'] || 'false').zero?
-merge_behind = (ENV[`MERGE_WHEN_BEHIND`] || 'true').zero?
+
+def truth_of(value, default)
+    (value || default).casecmp('true').zero?
+end
+
+should_update = truth_of(ENV['AUTO_UPDATE'], 'true')
+close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], 'false')
+delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], 'false')
+merge_behind = truth_of(ENV[`MERGE_WHEN_BEHIND`], 'true')
 merge_method = ENV['MERGE_METHOD'] || 'merge'
 pull_requests.each do | pull_request |
     case pull_request.mergeable_state
