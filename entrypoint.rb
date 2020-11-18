@@ -48,6 +48,10 @@ def truth_of(value, default)
     (value || default.to_s).casecmp('true').zero?
 end
 
+def merge_method()
+    ENV['MERGE_METHOD'] || 'merge'
+end 
+
 def update_rebase(client, pull_request)
     repo = pull_request.base.repo
     base_branch = pull_request.base.ref
@@ -77,7 +81,6 @@ end
 
 def perform_merge(client, pull_request)
     rebaseable = pull_request.rebaseable
-    merge_method = ENV['MERGE_METHOD'] || 'merge'
     if rebaseable || pull_request.mergeable && (merge_method == 'merge' || truth_of(ENV['FALLBACK_TO_MERGE'], false))  then
         client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
     else
