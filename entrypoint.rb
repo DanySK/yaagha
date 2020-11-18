@@ -135,7 +135,7 @@ def dirty(client, pull_request)
     end
 end
 
-def process_pull_request(pull_request, depth = 0)
+def process_pull_request(client, pull_request, depth = 0)
     puts "Process ##{pull_request.number}: #{pull_request.title}"
     # Request a pull request descriptor including the mergeable state
     pull_request = client.pull_request(repo_slug, pull_request.number)
@@ -157,8 +157,8 @@ def process_pull_request(pull_request, depth = 0)
             behind(client, pull_request)
         else
             puts "Waiting to see if state updates"
-            sleep(rand(8) + 2))
-            process_pull_request(pull_request, depth + 1)
+            sleep(rand(8) + 2)
+            process_pull_request(client, pull_request, depth + 1)
         end
     else
         puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
@@ -166,5 +166,5 @@ def process_pull_request(pull_request, depth = 0)
 end
 
 pull_requests.each do | pull_request |
-    process_pull_request(pull_request)
+    process_pull_request(client, pull_request)
 end
