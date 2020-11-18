@@ -44,7 +44,7 @@ pull_requests = open_pull_requests.filter do | pull_request |
 end
 
 def truth_of(value, default)
-    (value || default).casecmp(default.to_s).zero?
+    (value || default.to_s).casecmp('true').zero?
 end
 
 should_update = truth_of(ENV['AUTO_UPDATE'], true)
