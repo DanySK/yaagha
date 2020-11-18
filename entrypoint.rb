@@ -87,9 +87,13 @@ def update_rebase(client, pull_request)
     end
 end
 
-def perform_merge(client, pull_request)
+def canBeMerged(pull_request)
     rebaseable = pull_request.rebaseable
-    if rebaseable || pull_request.mergeable && (merge_method == 'merge' || truth_of(ENV['FALLBACK_TO_MERGE'], false))  then
+    rebaseable || pull_request.mergeable && (merge_method == 'merge' || truth_of(ENV['FALLBACK_TO_MERGE'], false))
+end
+
+def perform_merge(client, pull_request)
+    if canBeMerged(pull_request) then
         client.merge_pull_request(
             pull_request.base.repo.full_name,
             pull_request.number,
@@ -138,6 +142,8 @@ pull_requests.each do | pull_request |
         behind(client, pull_request)
     when 'clean'
         perform_merge(client, pull_request)
+    when 'unstable'
+        canBeMerged(pull_request) && perform_merge(client, pull_request)
     when 'dirty'
         dirty(client, pull_request)
     when 'unknown'
