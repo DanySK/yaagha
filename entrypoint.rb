@@ -134,13 +134,13 @@ pull_requests.each do | pull_request |
         perform_merge(client, pull_request)
     when 'dirty'
         dirty(client, pull_request)
-    when 'unknown'
-        puts 'Trying to syncronize'
-        behind(client, pull_request)
-        puts "Reloading the pull request"
-        pull_request = client.pull_request(repo_slug, pull_request.number)
-        if pull_request.state == 'open' then
-            unless 
+    # when 'unknown'
+    #     puts 'Trying to syncronize'
+    #     behind(client, pull_request)
+    #     puts "Reloading the pull request"
+    #     pull_request = client.pull_request(repo_slug, pull_request.number)
+    #     if pull_request.state == 'open' then
+    #         unless 
 
     else
         puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
