@@ -17,7 +17,7 @@ Anything but `true` (ignoring case) is interpreted as `false`.
 * `AUTO_UPDATE`: Whether pull requests coming from this repository should get updated before merge. Defaults to `true`.
 Anything but `true` (ignoring case) is interpreted as `false`.
 * `MERGE_WHEN_BEHIND`: if `AUTO_UPDATE` is disabled, Whether to merge pull requests that are in mergeable state `behind`. Defaults to `true`
-* `CLOSE_ON_CONFLICT`: Closes the pull request if it can't get updated (`dirty` or `blocked`). Defaults to `false`.
+* `CLOSE_ON_CONFLICT`: Closes the pull request if it can't get updated (mergeable state `dirty`). Defaults to `false`.
 Anything but `true` (ignoring case) is interpreted as `false`.
 * `DELETE_BRANCH_ON_CLOSE`: if the pull request does not come from a fork and both `AUTO_UPDATE` and `CLOSE_ON_CONFLICT` are set, this flag determines whether the head branch should get deleted.
 Defaults to `false`.

@@ -57,7 +57,7 @@ pull_requests.each do | pull_request |
         end
     when 'clean'
         client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
-    when /blocked|dirty/
+    when 'dirty'
         if close_on_conflict then
             client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
             if delete_branch_on_close then
