@@ -48,13 +48,6 @@ def truth_of(value, default)
     (value || default.to_s).casecmp('true').zero?
 end
 
-should_update = truth_of(ENV['AUTO_UPDATE'], true)
-close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], false)
-delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false)
-merge_behind = truth_of(ENV['MERGE_WHEN_BEHIND'], true)
-fallback_to_merge = truth_of(ENV['FALLBACK_TO_MERGE'], false)
-merge_method = ENV['MERGE_METHOD'] || 'merge'
-
 def update_rebase(client, pull_request)
     repo = pull_request.base.repo
     base_branch = pull_request.base.ref
@@ -84,7 +77,8 @@ end
 
 def perform_merge(client, pull_request)
     rebaseable = pull_request.rebaseable
-    if rebaseable || pull_request.mergeable && (merge_method == 'merge' || fallback_to_merge)  then
+    merge_method = ENV['MERGE_METHOD'] || 'merge'
+    if rebaseable || pull_request.mergeable && (merge_method == 'merge' || truth_of(ENV['FALLBACK_TO_MERGE'], false))  then
         client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
     else
         puts "Pull request ##{pull_request.number} can't get merged with method #{merge_method}."
@@ -95,21 +89,21 @@ def perform_merge(client, pull_request)
 end
 
 def behind(client, pull_request)
-    if should_update then
+    if truth_of(ENV['AUTO_UPDATE'], true) then
         if merge_method == 'merge' then
             client.put("/repos/#{repo_slug}/pulls/#{pull_request.number}/update-branch", :accept => 'application/vnd.github.lydian-preview+json')
         elsif pull_request.base.repo.full_name == pull_request.head.repo.full_name
             update_rebase(client, pull_request)
         end
-    elsif merge_behind
+    elsif truth_of(ENV['MERGE_WHEN_BEHIND'], true)
         perform_merge(client, pull_request)
     end
 end
 
 def dirty(client, pull_request)
-    if close_on_conflict then
+    if truth_of(ENV['CLOSE_ON_CONFLICT'], false) then
         client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
-        if delete_branch_on_close then
+        if truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false) then
             client.delete_branch(repo_slug, pull_request.head.ref)
         end
     end
