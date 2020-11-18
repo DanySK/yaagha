@@ -75,7 +75,7 @@ def update_rebase(client, pull_request)
             remote_uri = "https://#{ENV['GITHUB_ACTOR']}:#{github_token}@#{repo.html_url.split('://').last}"
             authenticated_remote_name = 'authenticated'
             git.add_remote(authenticated_remote_name, remote_uri)
-            puts `git push --force`
+            puts `git push #{authenticated} #{head_branch} --force`
             # $?.success?
             true
         end
