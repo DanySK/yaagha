@@ -137,6 +137,7 @@ end
 
 def process_pull_request(client, pull_request, depth = 0)
     puts "Process ##{pull_request.number}: #{pull_request.title}"
+    repo_slug = pull_request.base.repo.full_name
     # Request a pull request descriptor including the mergeable state
     pull_request = client.pull_request(repo_slug, pull_request.number)
     state = pull_request.mergeable_state
