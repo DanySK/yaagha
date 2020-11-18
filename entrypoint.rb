@@ -53,10 +53,10 @@ pull_requests.each do | pull_request |
         if should_update then
             client.put("/repos/#{repo_slug}/pulls/#{pull_request.number}/update-branch", :accept => 'application/vnd.github.lydian-preview+json')
         elsif merge_behind
-            client.merge_pull_request(repo_slug, pull_request.number, '', { :merge_method => merge_method })
+            client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
         end
     when 'clean'
-        client.merge_pull_request(repo_slug, pull_request.number, '', { :merge_method => merge_method })
+        client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
     when /blocked|dirty/
         if close_on_conflict then
             client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
