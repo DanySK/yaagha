@@ -94,6 +94,7 @@ end
 
 def perform_merge(client, pull_request)
     if canBeMerged(pull_request) then
+        puts "Merging with #{merge_method} ##{pull_request.number}: #{pull_request.title}"
         client.merge_pull_request(
             pull_request.base.repo.full_name,
             pull_request.number,
@@ -123,10 +124,13 @@ end
 
 def dirty(client, pull_request)
     if truth_of(ENV['CLOSE_ON_CONFLICT'], false) then
+        puts "Closing ##{pull_request.number}: #{pull_request.title}"
         repo_slug = pull_request.base.repo.full_name
         client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
         if truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false) then
-            client.delete_branch(repo_slug, pull_request.head.ref)
+            head_branch = pull_request.head.ref
+            puts "Deleting branch #{head_branch}"
+            client.delete_branch(repo_slug, head_branch)
         end
     end
 end
