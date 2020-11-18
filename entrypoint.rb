@@ -135,14 +135,14 @@ def dirty(client, pull_request)
     end
 end
 
-pull_requests.each do | pull_request |
+def process_pull_request(pull_request, depth = 0)
     puts "Process ##{pull_request.number}: #{pull_request.title}"
     # Request a pull request descriptor including the mergeable state
     pull_request = client.pull_request(repo_slug, pull_request.number)
     state = pull_request.mergeable_state
     puts "Pull request ##{pull_request.number} is in state '#{state}'"
     case pull_request.mergeable_state
-    when /behind|unknown/
+    when 'behind'
         behind(client, pull_request)
     when 'clean'
         perform_merge(client, pull_request)
@@ -151,9 +151,20 @@ pull_requests.each do | pull_request |
     when 'dirty'
         dirty(client, pull_request)
     when 'unknown'
-        puts 'Trying to syncronize'
-        behind(client, pull_request)
+        if depth > 15 then
+            puts "The state is still unknown. Maybe some problem with the GitHub API?"
+            puts 'Trying to syncronize, then giving up.'
+            behind(client, pull_request)
+        else
+            puts "Waiting to see if state updates"
+            sleep(rand(8) + 2))
+            process_pull_request(pull_request, depth + 1)
+        end
     else
         puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
-    end
+   end
+end
+
+pull_requests.each do | pull_request |
+    process_pull_request(pull_request)
 end
