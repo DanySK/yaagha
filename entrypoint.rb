@@ -50,7 +50,7 @@ end
 should_update = truth_of(ENV['AUTO_UPDATE'], true)
 close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], false)
 delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false)
-merge_behind = truth_of(ENV[`MERGE_WHEN_BEHIND`], true)
+merge_behind = truth_of(ENV['MERGE_WHEN_BEHIND'], true)
 merge_method = ENV['MERGE_METHOD'] || 'merge'
 pull_requests.each do | pull_request |
     case pull_request.mergeable_state
