@@ -14,9 +14,11 @@ Anything but `true` (ignoring case) is interpreted as `false`.
 * `MERGE_LABELS`: List of comma separated labels that must be present on a pull request for Yaagha to run the merge operation, defaults to `automerge`.
 * `BLOCK_LABELS`: List of comma separated labels that, if present, prevents automatic merging. Default empty. Block labels take priority over merge labels.
 * `MERGE_METHOD`: How to merge, between `merge`, `rebase`, and `squash`. Defaults to `merge`.
+* `FALLBACK_TO_MERGE`: In case the `MERGE_METHOD` is not `merge`, whether to perform a merge anyway if the pull request is `mergeable` but not `rebaseable`
 * `AUTO_UPDATE`: Whether pull requests coming from this repository should get updated before merge. Defaults to `true`.
 Anything but `true` (ignoring case) is interpreted as `false`.
-* `MERGE_WHEN_BEHIND`: if `AUTO_UPDATE` is disabled, Whether to merge pull requests that are in mergeable state `behind`. Defaults to `true`
+* `MERGE_WHEN_BEHIND`: if `AUTO_UPDATE` is disabled, Whether to merge pull requests that are in mergeable state `behind`. Defaults to `false`
+Anything but `true` (ignoring case) is interpreted as `false`.
 * `CLOSE_ON_CONFLICT`: Closes the pull request if it can't get updated (mergeable state `dirty`). Defaults to `false`.
 Anything but `true` (ignoring case) is interpreted as `false`.
 * `DELETE_BRANCH_ON_CLOSE`: if the pull request does not come from a fork and both `AUTO_UPDATE` and `CLOSE_ON_CONFLICT` are set, this flag determines whether the head branch should get deleted.

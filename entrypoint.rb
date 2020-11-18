@@ -2,6 +2,7 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'octokit'
+require 'git'
 
 # Run label evaluation first
 def parse_label_list(labels)
@@ -51,25 +52,88 @@ should_update = truth_of(ENV['AUTO_UPDATE'], true)
 close_on_conflict = truth_of(ENV['CLOSE_ON_CONFLICT'], false)
 delete_branch_on_close = truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false)
 merge_behind = truth_of(ENV['MERGE_WHEN_BEHIND'], true)
+fallback_to_merge = truth_of(ENV['FALLBACK_TO_MERGE'], false)
 merge_method = ENV['MERGE_METHOD'] || 'merge'
+
+def update_rebase(client, pull_request)
+    repo = pull_request.base.repo
+    base_branch = pull_request.base.ref
+    head_branch = pull_request.head.ref
+    # Clone the repository
+    destination = Dir["#{ENV['GITHUB_WORKSPACE']}/#{repo.full_name}"]
+    git = Git.clone(repo.html_url, destination)
+    puts git.checkout(head_branch)
+    successful_rebase = Dir.chdir(destination) do
+        rebase = `git rebase --autosquash master`
+        if rebase.include?('CONFLICT') then
+            puts rebase
+            puts 'Unable to perform rebase, considering the pull request as dirty'
+            `git rebase --abort`
+            false
+        else
+            puts `git push --force`
+            $?.success?
+        end
+    end
+    FileUtils.rm_rf(destination)
+    unless successful_rebase then
+        puts 'Rebase failed, treating this repository as dirty'
+        dirty(client, pull_request)
+    end
+end
+
+def perform_merge(client, pull_request)
+    rebaseable = pull_request.rebaseable
+    if rebaseable || pull_request.mergeable && (merge_method == 'merge' || fallback_to_merge)  then
+        client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
+    else
+        puts "Pull request ##{pull_request.number} can't get merged with method #{merge_method}."
+        puts "Rebaseable: #{rebaseable}; mergeable: #{pull_request.mergeable}"
+        puts 'Treating the pull request as dirty'
+        dirty(client, pull_request)
+    end
+end
+
+def behind(client, pull_request)
+    if should_update then
+        if merge_method == 'merge' then
+            client.put("/repos/#{repo_slug}/pulls/#{pull_request.number}/update-branch", :accept => 'application/vnd.github.lydian-preview+json')
+        elsif pull_request.base.repo.full_name == pull_request.head.repo.full_name
+            update_rebase(client, pull_request)
+        end
+    elsif merge_behind
+        perform_merge(client, pull_request)
+    end
+end
+
+def dirty(client, pull_request)
+    if close_on_conflict then
+        client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
+        if delete_branch_on_close then
+            client.delete_branch(repo_slug, pull_request.head.ref)
+        end
+    end
+end
+
 pull_requests.each do | pull_request |
+    puts "Process ##{pull_request.number}: #{pull_request.title}"
+    # Request a pull request descriptor including the mergeable state
+    pull_request = client.pull_request(repo_slug, pull_request.number)
+    state = pull_request.mergeable_state
+    puts "Pull request ##{pull_request.number} is in state '#{state}'"
     case pull_request.mergeable_state
     when 'behind'
-        if should_update then
-            client.put("/repos/#{repo_slug}/pulls/#{pull_request.number}/update-branch", :accept => 'application/vnd.github.lydian-preview+json')
-        elsif merge_behind
-            client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
-        end
+        behind(client, pull_request)
     when 'clean'
-        client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
+        perform_merge(client, pull_request)
     when 'dirty'
-        if close_on_conflict then
-            client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
-            if delete_branch_on_close then
-                client.delete_branch(repo_slug, pull_request.head.ref)
-            end
-        end
+        dirty(client, pull_request)
+    # when 'unknown'
+    #     puts 'Trying to syncronize'
+    #     behind(client, pull_request)
+    #     puts "Reloading the pull request"
+    #     pull_request = client.pull_request(repo_slug, pull_request.number)
     else
-        puts "Unknown mergeable_state '#{pull_request.mergeable_state}'"
+        puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
     end
 end
