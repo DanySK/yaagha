@@ -25,6 +25,8 @@ Anything but `true` (ignoring case) is interpreted as `false`.
 Defaults to `false`.
 Anything but `true` (ignoring case) is interpreted as `false`.
 The same behavior in case of successful merge can be achieved by configuring "Automatically delete head branches" in the repository's options. 
+* `GIT_USER_NAME`: Name of the committer, to be used in case of rebase update. Defaults to `yaagha [bot]`
+* `GIT_USER_EMAIL`: Email of the committer, to be used in case of rebase update. Defaults to `yaagha@automerge.bot`
 
 ### Additional configuration options
 

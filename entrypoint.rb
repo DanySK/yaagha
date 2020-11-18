@@ -59,6 +59,8 @@ def update_rebase(client, pull_request)
     # Clone the repository
     destination = "#{ENV['GITHUB_WORKSPACE']}/#{repo.full_name}"
     git = Git.clone(repo.html_url, destination)
+    git.config('user.name', ENV['GIT_USER_NAME'] || 'yaagha [bot]')
+    git.config('user.email', ENV['GIT_USER_EMAIL'] || 'yaagha@automerge.bot')
     puts git.checkout(head_branch)
     successful_rebase = Dir.chdir(destination) do
         rebase = `git rebase --autosquash master`
@@ -82,7 +84,12 @@ end
 def perform_merge(client, pull_request)
     rebaseable = pull_request.rebaseable
     if rebaseable || pull_request.mergeable && (merge_method == 'merge' || truth_of(ENV['FALLBACK_TO_MERGE'], false))  then
-        client.merge_pull_request(repo_slug, pull_request.number, pull_request.title, { :merge_method => merge_method })
+        client.merge_pull_request(
+            pull_request.base.repo.full_name,
+            pull_request.number,
+            pull_request.title,
+            { :merge_method => merge_method }
+        )
     else
         puts "Pull request ##{pull_request.number} can't get merged with method #{merge_method}."
         puts "Rebaseable: #{rebaseable}; mergeable: #{pull_request.mergeable}"
@@ -94,6 +101,7 @@ end
 def behind(client, pull_request)
     if truth_of(ENV['AUTO_UPDATE'], true) then
         if merge_method == 'merge' then
+            repo_slug = pull_request.base.repo.full_name
             client.put("/repos/#{repo_slug}/pulls/#{pull_request.number}/update-branch", :accept => 'application/vnd.github.lydian-preview+json')
         elsif pull_request.base.repo.full_name == pull_request.head.repo.full_name
             update_rebase(client, pull_request)
@@ -105,6 +113,7 @@ end
 
 def dirty(client, pull_request)
     if truth_of(ENV['CLOSE_ON_CONFLICT'], false) then
+        repo_slug = pull_request.base.repo.full_name
         client.update_pull_request(repo_slug, pull_request.number, { :state => 'closed' })
         if truth_of(ENV['DELETE_BRANCH_ON_CLOSE'], false) then
             client.delete_branch(repo_slug, pull_request.head.ref)
@@ -125,11 +134,14 @@ pull_requests.each do | pull_request |
         perform_merge(client, pull_request)
     when 'dirty'
         dirty(client, pull_request)
-    # when 'unknown'
-    #     puts 'Trying to syncronize'
-    #     behind(client, pull_request)
-    #     puts "Reloading the pull request"
-    #     pull_request = client.pull_request(repo_slug, pull_request.number)
+    when 'unknown'
+        puts 'Trying to syncronize'
+        behind(client, pull_request)
+        puts "Reloading the pull request"
+        pull_request = client.pull_request(repo_slug, pull_request.number)
+        if pull_request.state == 'open' then
+            unless 
+
     else
         puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
     end
