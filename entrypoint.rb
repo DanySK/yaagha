@@ -57,7 +57,7 @@ def update_rebase(client, pull_request)
     base_branch = pull_request.base.ref
     head_branch = pull_request.head.ref
     # Clone the repository
-    destination = Dir["#{ENV['GITHUB_WORKSPACE']}/#{repo.full_name}"]
+    destination = "#{ENV['GITHUB_WORKSPACE']}/#{repo.full_name}"
     git = Git.clone(repo.html_url, destination)
     puts git.checkout(head_branch)
     successful_rebase = Dir.chdir(destination) do
