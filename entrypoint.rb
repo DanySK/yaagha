@@ -65,7 +65,7 @@ def update_rebase(client, pull_request)
     git.config('user.email', ENV['GIT_USER_EMAIL'] || 'yaagha@automerge.bot')
     puts git.checkout(head_branch)
     successful_rebase = Dir.chdir(destination) do
-        rebase = `git rebase --autosquash master`
+        rebase = `git rebase --autosquash #{base_branch}`
         puts rebase
         if rebase.include?('CONFLICT') then
             puts 'Unable to perform rebase, considering the pull request as dirty'
