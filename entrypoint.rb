@@ -63,6 +63,7 @@ def update_rebase(client, pull_request)
     git = Git.clone(repo.html_url, destination)
     git.config('user.name', ENV['GIT_USER_NAME'] || 'yaagha [bot]')
     git.config('user.email', ENV['GIT_USER_EMAIL'] || 'yaagha@automerge.bot')
+    puts git.checkout(base_branch)
     puts git.checkout(head_branch)
     successful_rebase = Dir.chdir(destination) do
         rebase = `git rebase --autosquash #{base_branch}`
