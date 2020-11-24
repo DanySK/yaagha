@@ -96,12 +96,19 @@ end
 def perform_merge(client, pull_request)
     if canBeMerged(pull_request) then
         puts "Merging with #{merge_method} ##{pull_request.number}: #{pull_request.title}"
-        client.merge_pull_request(
-            pull_request.base.repo.full_name,
-            pull_request.number,
-            pull_request.title,
-            { :merge_method => merge_method }
-        )
+        begin
+            client.merge_pull_request(
+                pull_request.base.repo.full_name,
+                pull_request.number,
+                pull_request.title,
+                { :merge_method => merge_method }
+            )
+        rescue Octokit::MethodNotAllowed => error
+            puts error.message
+            puts "Something went wrong while trying to merge the pull request, it was mergeable but now is no more."
+            puts "Maybe someone merged this concurrently? Retrying..."
+            process_pull_request(client, pull_request)
+        end
     else
         puts "Pull request ##{pull_request.number} can't get merged with method #{merge_method}."
         puts "Rebaseable: #{rebaseable}; mergeable: #{pull_request.mergeable}"
@@ -141,30 +148,34 @@ def process_pull_request(client, pull_request, depth = 0)
     repo_slug = pull_request.base.repo.full_name
     # Request a pull request descriptor including the mergeable state
     pull_request = client.pull_request(repo_slug, pull_request.number)
-    state = pull_request.mergeable_state
-    puts "Pull request ##{pull_request.number} is in state '#{state}'"
-    case pull_request.mergeable_state
-    when 'behind'
-        behind(client, pull_request)
-    when 'clean'
-        perform_merge(client, pull_request)
-    when 'unstable'
-        canBeMerged(pull_request) && perform_merge(client, pull_request)
-    when 'dirty'
-        dirty(client, pull_request)
-    when 'unknown'
-        if depth > 15 then
-            puts "The state is still unknown. Maybe some problem with the GitHub API?"
-            puts 'Trying to syncronize, then giving up.'
+    unless pull_request.locked? || pull_request.state == 'closed' then
+        state = pull_request.mergeable_state
+        puts "Pull request ##{pull_request.number} is in state '#{state}'"
+        case pull_request.mergeable_state
+        when 'behind'
             behind(client, pull_request)
+        when 'clean'
+            perform_merge(client, pull_request)
+        when 'unstable'
+            canBeMerged(pull_request) && perform_merge(client, pull_request)
+        when 'dirty'
+            dirty(client, pull_request)
+        when 'unknown'
+            if depth > 15 then
+                puts "The state is still unknown. Maybe some problem with the GitHub API?"
+                puts 'Trying to syncronize, then giving up.'
+                behind(client, pull_request)
+            else
+                puts "Waiting to see if state updates"
+                sleep(rand(8) + 2)
+                process_pull_request(client, pull_request, depth + 1)
+            end
         else
-            puts "Waiting to see if state updates"
-            sleep(rand(8) + 2)
-            process_pull_request(client, pull_request, depth + 1)
+            puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
         end
     else
-        puts "Skipping pull request with mergeable_state '#{pull_request.mergeable_state}'"
-   end
+        puts "Pull request ##{pull_request.number} has been closed already"
+    end
 end
 
 pull_requests.each do | pull_request |
