@@ -17,9 +17,15 @@ end
 
 # Common configuration
 puts 'Checking input parameters'
+
 def github_token()
-    ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
+    token = ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
+    if (token.empty?) then
+        raise('An empty token was provided. Yaagha will terminate.')
+    end
+    token
 end
+
 github_api_endpoint = ENV['GITHUB_API_URL'] || 'https://api.github.com'
 puts "Configuring API access, selected endpoint is #{github_api_endpoint}"
 Octokit.configure do | conf |
