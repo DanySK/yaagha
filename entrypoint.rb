@@ -4,6 +4,12 @@ require 'bundler/setup'
 require 'octokit'
 require 'git'
 
+# Check that the environment is appropriate
+if (ENV['GITHUB_HEAD_REF']) then
+    puts "Yaagha cannot do anything useful from a pull-request build"
+    exit(0)
+end
+
 # Run label evaluation first
 def parse_label_list(labels)
     labels.split(',').map(&:strip)
