@@ -4,12 +4,6 @@ require 'bundler/setup'
 require 'octokit'
 require 'git'
 
-# Check that the environment is appropriate
-if (ENV['GITHUB_HEAD_REF']) then
-    puts "Yaagha cannot do anything useful from a pull-request build"
-    exit(0)
-end
-
 # Run label evaluation first
 def parse_label_list(labels)
     labels.split(',').map(&:strip)
@@ -27,6 +21,11 @@ puts 'Checking input parameters'
 def github_token()
     token = ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
     if (token.empty?) then
+        # Check that the environment is appropriate
+        if (ENV['GITHUB_HEAD_REF'] && ENV['GITHUB_BASE_REF']) then
+            puts "Empty GitHub Token, and pull request environment detected. Shutting down."
+            exit(0)
+        end
         raise('An empty token was provided. Yaagha will terminate.')
     end
     token
