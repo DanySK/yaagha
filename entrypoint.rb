@@ -71,7 +71,8 @@ def update_rebase(client, pull_request)
     head_branch = pull_request.head.ref
     # Clone the repository
     destination = "#{ENV['GITHUB_WORKSPACE']}/#{repo.full_name}"
-    git = Git.clone(repo.html_url, destination)
+    remote_uri = "https://#{ENV['GITHUB_ACTOR']}:#{github_token}@#{repo.html_url.split('://').last}"
+    git = Git.clone(remote_uri, destination)
     git.config('user.name', ENV['GIT_USER_NAME'] || 'yaagha [bot]')
     git.config('user.email', ENV['GIT_USER_EMAIL'] || 'yaagha@automerge.bot')
     puts git.checkout(base_branch)
@@ -84,7 +85,6 @@ def update_rebase(client, pull_request)
             `git rebase --abort`
             false
         else
-            remote_uri = "https://#{ENV['GITHUB_ACTOR']}:#{github_token}@#{repo.html_url.split('://').last}"
             authenticated_remote_name = 'authenticated'
             git.add_remote(authenticated_remote_name, remote_uri)
             puts `git push #{authenticated_remote_name} #{head_branch} --force`
