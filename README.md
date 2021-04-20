@@ -36,3 +36,8 @@ These options are available, but the average user will probably never need to me
 * `GITHUB_REPOSITORY`: Repository where this action is being run. Automatically populated by GitHub Actions.
 * `GITHUB_SERVER_URL`: GitHub server URL. Defaults to `https://github.com`
 * `GITHUB_WORKSPACE`: Internal work directory. Automatically populated by GitHub Actions.
+
+
+## Usage example
+
+Yaagha uses yaagha to keep itself up to date. Just look at [this file](https://github.com/DanySK/yaagha/blob/master/.github/workflows/automerge.yml) for a working configuration.
