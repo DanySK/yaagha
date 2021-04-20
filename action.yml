@@ -3,7 +3,7 @@ description: "Updates, merges, and closes pull requests automatically."
 author: "Danilo Pianini"
 runs:
   using: "docker"
-  image: "danysk/yaagha"
+  image: "docker://danysk/yaagha"
 branding:
   icon: 'git-merge'
   color: 'green'
