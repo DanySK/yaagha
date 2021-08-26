@@ -1,4 +1,4 @@
-FROM ruby:2.7.2
+FROM ruby:2.7.4
 ADD Gemfile /Gemfile
 RUN bundle install
 ADD entrypoint.rb /entrypoint.rb
