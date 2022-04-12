@@ -1,4 +1,4 @@
-FROM ruby:3.1.1
+FROM ruby:3.1.2
 ADD Gemfile /Gemfile
 RUN bundle install
 ADD entrypoint.rb /entrypoint.rb
